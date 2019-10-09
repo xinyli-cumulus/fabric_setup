@@ -1,0 +1,14 @@
+---
+- name: Configure BGP
+  nclu:
+    commands:
+      - add bgp autonomous-system {{ switches[ansible_hostname].bgp_as}}
+      - add bgp router-id {{ switches[ansible_hostname].interfaces.lo.ipv4 | regex_replace('/32') }}
+      - add bgp neighbor fabric peer-group
+      - add bgp neighbor fabric remote-as external
+      - add bgp neighbor {{ switches[ansible_hostname].interfaces.fabriclinks}} interface peer-group fabric
+      - add bgp l2vpn evpn neighbor fabric activate
+    commit: true
+
+
+...

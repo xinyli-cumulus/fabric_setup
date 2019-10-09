@@ -1,0 +1,37 @@
+---
+- name: Configure BGP/EVPN neighbor
+  nclu:
+    commands:
+      - add bgp autonomous-system {{ switches[ansible_hostname].bgp_as }}
+      - add bgp neighbor fabric peer-group
+      - add bgp neighbor fabric remote-as external
+      - add bgp neighbor {{ switches[ansible_hostname].interfaces.fabriclinks }} interface peer-group fabric
+      - add bgp l2vpn evpn neighbor fabric activate
+      - add bgp l2vpn evpn advertise-all-vni
+      - add vrf {{ switches[ansible_hostname].VRF }}
+    commit: true
+
+- name: Configure L3 VNI
+  nclu:
+    commands:
+      - add vlan 4001 hwaddress {{ switches[ansible_hostname].clag_sys_mac }}
+      - add vlan 4001 vrf {{ switches[ansible_hostname].VRF }}
+      - add vxlan vni104001 vxlan id 104001
+      - add vxlan vni104001 bridge access 4001
+      - add vxlan vni104001 vxlan local-tunnel-ip {{switches[ansible_hostname].interfaces.lo.ipv4 }}
+      - add vrf {{ switches[ansible_hostname].VRF }} vni 104001
+    commit: true
+
+- name: Configure Interfaces and BGP facing Internet
+  nclu:
+    commands:
+      - add interface swp44 ip address {{ switches[ansible_hostname].interfaces.swp44_ip }}
+      - add interface swp44 vrf {{ switches[ansible_hostname].VRF }}
+      - add bgp vrf {{ switches[ansible_hostname].VRF }} autonomous-system {{ switches[ansible_hostname].bgp_as }}
+      - add bgp vrf {{ switches[ansible_hostname].VRF }} neighbor internet peer-group
+      - add bgp vrf {{ switches[ansible_hostname].VRF }} neighbor {{ switches[ansible_hostname].bgp_peer_ip }} peer-group internet
+      - add bgp vrf {{ switches[ansible_hostname].VRF }} l2vpn evpn advertise ipv4 unicast
+    commit: true
+
+
+...

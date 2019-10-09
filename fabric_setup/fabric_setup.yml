@@ -1,0 +1,31 @@
+---
+- hosts: spine,leaf,exit
+  roles:
+    - switch_common
+
+- hosts: spine
+  roles:
+    - spines
+
+- hosts: leaf01,leaf02,leaf03
+  roles:
+    - leafs
+
+- hosts: leaf01,leaf02
+  roles:
+    - mlag
+
+- hosts: exit
+  roles:
+    - exits
+
+- hosts: leaf03
+  remote_user: cumulus
+  become: yes
+
+  tasks:
+  - name: Configure standalone server facing ports
+    nclu:
+      commands:
+        - add interface {{ switches[ansible_hostname].interfaces.serverlinks }} bridge access {{ switches[ansible_hostname].interfaces.server_vlan}}
+      commit: true

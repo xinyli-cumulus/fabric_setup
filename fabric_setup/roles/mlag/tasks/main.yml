@@ -1,0 +1,12 @@
+---
+- name: Configure MLAG Setup
+  nclu:
+    commands:
+      - add clag peer sys-mac {{ switches[ansible_hostname].clag_sys_mac }} interface {{ switches[ansible_hostname].interfaces.peerlinks }} {{ switches[ansible_hostname].clag_role }}
+      - add clag port bond server interface {{ switches[ansible_hostname].interfaces.serverlinks }} clag-id 1
+      - add bond server bridge access {{ switches[ansible_hostname].interfaces.server_vlan }}
+      - add loopback lo clag vxlan-anycast-ip {{ switches[ansible_hostname].interfaces.lo.vxlan_anycast_ip }}
+    commit: true
+
+
+...
