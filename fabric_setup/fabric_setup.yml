@@ -1,0 +1,51 @@
+---
+- hosts: spine,leaf,exit
+  roles:
+    - switch_common
+
+- hosts: spine
+  roles:
+    - spines
+
+- hosts: leaf01,leaf02,leaf03
+  roles:
+    - leafs
+
+- hosts: leaf01,leaf02,exit
+  roles:
+    - mlag
+
+- hosts: exit
+  roles:
+    - exits
+
+- hosts: leaf03
+  remote_user: cumulus
+  become: yes
+
+  tasks:
+  - name: Configure standalone server facing ports
+    nclu:
+      commands:
+        - add interface {{ switches[ansible_hostname].interfaces.serverlinks }} bridge access {{ switches[ansible_hostname].interfaces.server_vlan}}
+      commit: true
+
+- hosts: internet
+  remote_user: cumulus
+  become: yes
+
+  tasks:
+  - name: Configure Internet Switch
+    nclu:
+      commands:
+        - add interface swp1 ip address 172.16.1.1/30
+        - add interface swp2 ip address 172.16.2.1/30
+        - add loopback lo ip address 88.88.88.88/32
+        - add routing route-map LOOPBACK permit 10 match interface lo
+        - add bgp autonomous-system 25253
+        - add bgp neighbor BL peer-group
+        - add bgp neighbor BL remote-as external
+        - add bgp neighbor 172.16.1.2 peer-group BL
+        - add bgp neighbor 172.16.2.2 peer-group BL
+        - add bgp ipv4 unicast redistribute connected route-map LOOPBACK
+      commit: true

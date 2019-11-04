@@ -1,0 +1,11 @@
+---
+- name: Configure Loopback IP
+  nclu:
+    commands:
+      - add loopback lo ip address {{ switches[ansible_hostname].interfaces.lo.ipv4 }}
+    commit: true
+
+
+
+
+...

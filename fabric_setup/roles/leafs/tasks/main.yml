@@ -1,0 +1,58 @@
+---
+- name: Configure BGP EVPN for VxLAN fabric
+  nclu:
+    commands:
+      - add bgp autonomous-system {{ switches[ansible_hostname].bgp_as}}
+      - add bgp router-id {{ switches[ansible_hostname].interfaces.lo.ipv4 | regex_replace('/32') }}
+      - add bgp neighbor fabric peer-group
+      - add bgp neighbor fabric remote-as external
+      - add bgp neighbor {{ switches[ansible_hostname].interfaces.fabriclinks}} interface peer-group fabric
+      - add routing route-map LOOPBACK permit 10 match interface lo
+      - add bgp ipv4 unicast redistribute connected route-map LOOPBACK
+      - add bgp l2vpn evpn neighbor fabric activate
+      - add bgp l2vpn evpn advertise-all-vni
+      - add vrf {{ switches[ansible_hostname].VRF}}
+  commit: true
+
+- name: Configure SVI interfaces
+  nclu:
+    commands:
+      - add vlan {{ item.0 }} ip address {{ item.1 }}
+      - add vlan {{ item.0 }} vrf {{ switches[ansible_hostname].VRF }}
+      - add vlan {{ item.0 }} ip address-virtual {{ item.2 }} {{ item.3 }}
+    commit: true
+  with_together:
+      - "{{ switches[ansible_hostname].interfaces.vlan_id }}"
+      - "{{ switches[ansible_hostname].interfaces.svi_ip }}"
+      - "{{ switches[ansible_hostname].interfaces.svi_vmac }}"
+      - "{{ switches[ansible_hostname].interfaces.svi_vip}}"
+
+- name: Configure L2 VxLAN VNI interfaces
+  nclu:
+    commands:
+      - add vxlan vni{{ item.0 }} vxlan id {{ item.0}}
+      - add vxlan vni{{ item.0 }} bridge access {{ item.1 }}
+      - add vxlan vni{{ item.0 }} bridge learning off
+      - add vxlan vni{{ item.0 }} vxlan local-tunnelip {{ switches[ansible_hostname].interfaces.lo.ipv4 | regex_replace('/32') }}
+      - add vxlan vni{{ item.0 }} bridge arp-nd-suppress on
+    commit: true
+  with_together:
+      - "{{ switches[ansible_hostname].interfaces.vxlan_id }}"
+      - "{{ switches[ansible_hostname].interfaces.vlan_id }}"
+
+- name: Configure L3 VxLAN VNI interface
+  nclu:
+    commands:
+      - add vlan 4001
+      - add vlan 4001 vrf {{ switches[ansible_hostname].VRF }}
+      - add vlan 4001 hwaddress {{ switches[ansible_hostname].interfaces.l3_vni_mac }}
+      - add vxlan vni104001 vxlan id 104001
+      - add vxlan vni104001 bridge access 4001
+      - add vxlan vni104001 bridge learning off
+      - add vxlan vni104001 vxlan local-tunnelip {{ switches[ansible_hostname].interfaces.lo.ipv4 | regex_replace('/32') }}
+      - add vrf {{ switches[ansible_hostname].VRF }} vni 104001
+    commit: true
+
+
+
+...
