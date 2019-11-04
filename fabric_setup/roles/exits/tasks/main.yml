@@ -18,7 +18,7 @@
       - add vlan 4001 vrf {{ switches[ansible_hostname].VRF }}
       - add vxlan vni104001 vxlan id 104001
       - add vxlan vni104001 bridge access 4001
-      - add vxlan vni104001 vxlan local-tunnel-ip {{switches[ansible_hostname].interfaces.lo.ipv4 }}
+      - add vxlan vni104001 vxlan local-tunnelip {{switches[ansible_hostname].interfaces.lo.ipv4 | regex_replace('/32') }}
       - add vrf {{ switches[ansible_hostname].VRF }} vni 104001
     commit: true
 
@@ -29,6 +29,7 @@
       - add interface swp44 vrf {{ switches[ansible_hostname].VRF }}
       - add bgp vrf {{ switches[ansible_hostname].VRF }} autonomous-system {{ switches[ansible_hostname].bgp_as }}
       - add bgp vrf {{ switches[ansible_hostname].VRF }} neighbor internet peer-group
+      - add bgp vrf {{ switches[ansible_hostname].VRF }} neighbor internet remote-as external
       - add bgp vrf {{ switches[ansible_hostname].VRF }} neighbor {{ switches[ansible_hostname].bgp_peer_ip }} peer-group internet
       - add bgp vrf {{ switches[ansible_hostname].VRF }} l2vpn evpn advertise ipv4 unicast
     commit: true
