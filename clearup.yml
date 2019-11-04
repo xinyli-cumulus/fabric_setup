@@ -1,0 +1,10 @@
+---
+- hosts: spine, leaf, exit, internet
+  tasks:
+    - nclu:
+        commands:
+          - del all
+        commit: true
+...
+
+
