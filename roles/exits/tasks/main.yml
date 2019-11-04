@@ -6,6 +6,8 @@
       - add bgp neighbor fabric peer-group
       - add bgp neighbor fabric remote-as external
       - add bgp neighbor {{ switches[ansible_hostname].interfaces.fabriclinks }} interface peer-group fabric
+      - add routing route-map LOOPBACK permit 10 match interface lo
+      - add bgp ipv4 unicast redistribute connected route-map LOOPBACK
       - add bgp l2vpn evpn neighbor fabric activate
       - add bgp l2vpn evpn advertise-all-vni
       - add vrf {{ switches[ansible_hostname].VRF }}
