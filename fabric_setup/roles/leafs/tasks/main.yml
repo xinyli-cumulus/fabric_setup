@@ -18,15 +18,14 @@
   nclu:
     commands:
       - add vlan {{ item.0 }} ip address {{ item.1 }}
-      - add vlan {{ item.0 }} vrf {{ item.2 }}
-      - add vlan {{ item.0 }} ip address-virtual {{ item.3 }} {{ item.4 }}
+      - add vlan {{ item.0 }} vrf {{ switches[ansible_hostname].VRF }}
+      - add vlan {{ item.0 }} ip address-virtual {{ item.2 }} {{ item.3 }}
     commit: true
   with_together:
       - "{{ switches[ansible_hostname].interfaces.vlan_id }}"
       - "{{ switches[ansible_hostname].interfaces.svi_ip }}"
-      - "{{ switches[ansible_hostname].VRF }}"
       - "{{ switches[ansible_hostname].interfaces.svi_vmac }}"
-      - "{{ switches[ansible_hostnmae].interfaces.svi_vip}}"
+      - "{{ switches[ansible_hostname].interfaces.svi_vip}}"
 
 - name: Configure L2 VxLAN VNI interfaces
   nclu:
@@ -34,7 +33,7 @@
       - add vxlan vni{{ item.0 }} vxlan id {{ item.0}}
       - add vxlan vni{{ item.0 }} bridge access {{ item.1 }}
       - add vxlan vni{{ item.0 }} bridge learning off
-      - add vxlan vni{{ item.0 }} vxlan local-tunnelip {{ switches[ansible_hostname].interfaces.lo.ipv4 }}
+      - add vxlan vni{{ item.0 }} vxlan local-tunnelip {{ switches[ansible_hostname].interfaces.lo.ipv4 | regex_replace('/32') }}
       - add vxlan vni{{ item.0 }} bridge arp-nd-suppress on
     commit: true
   with_together:
@@ -50,7 +49,7 @@
       - add vxlan vni104001 vxlan id 104001
       - add vxlan vni104001 bridge access 4001
       - add vxlan vni104001 bridge learning off
-      - add vxlan vni104001 vxlan local-tunnelip {{ switches[ansible_hostname].interfaces.lo.ipv4 }}
+      - add vxlan vni104001 vxlan local-tunnelip {{ switches[ansible_hostname].interfaces.lo.ipv4 | regex_replace('/32') }}
       - add vrf {{ switches[ansible_hostname].VRF }} vni 104001
     commit: true
 
